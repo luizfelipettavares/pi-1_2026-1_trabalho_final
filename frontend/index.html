@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Cardápio | Bistrô</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="light-theme">
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <div id="offline-banner" class="offline-banner" style="display: none;">
+        ⚠️ Você está desconectado. Exibindo dados salvos em cache local.
+    </div>
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">🍽️</span>
+                <div>
+                    <h1>Bistrô Control</h1>
+                    <p>Painel de Gerenciamento de Cardápio</p>
+                </div>
+            </div>
+            <button id="toggle-theme" class="btn-theme" aria-label="Alternar tema visual">
+                <span class="theme-icon">🌓</span> Alternar Tema
+            </button>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        
+        <div class="forms-column">
+            <section class="card animate-in">
+                <div class="card-header">
+                    <span class="card-icon">📁</span>
+                    <h2>Nova Categoria</h2>
+                </div>
+                <form id="form-categoria" class="form-group">
+                    <div class="input-wrapper">
+                        <input type="text" id="cat-nome" placeholder="Ex: Sobremesas, Entradas..." required>
+                    </div>
+                    <button type="submit" id="btn-salvar-categoria" class="btn-primary">Salvar Categoria</button>
+                </form>
+            </section>
+
+            <section class="card animate-in">
+                <div class="card-header">
+                    <span class="card-icon">🍲</span>
+                    <h2>Gerenciar Prato</h2>
+                </div>
+                <form id="form-prato" class="form-group">
+                    <input type="hidden" id="prato-id">
+                    
+                    <div class="input-wrapper">
+                        <label for="prato-nome">Nome do Prato</label>
+                        <input type="text" id="prato-nome" placeholder="Ex: Filé do Chefe" required>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <label for="prato-preco">Preço de Venda (R$)</label>
+                        <input type="number" id="prato-preco" step="0.01" placeholder="0,00" required>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <label for="prato-categoria">Categoria vinculada</label>
+                        <select id="prato-categoria" required>
+                            <option value="">Selecione uma Categoria</option>
+                        </select>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" id="btn-salvar-prato" class="btn-primary">Salvar Prato</button>
+                        <button type="button" id="btn-cancelar" class="btn-secondary" style="display:none;">Cancelar</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <div class="display-column">
+            <section class="card table-card animate-in">
+                <div class="table-card-header">
+                    <div class="card-header">
+                        <span class="card-icon">📋</span>
+                        <h2>Itens do Cardápio</h2>
+                    </div>
+                    <div class="filter-wrapper">
+                        <label for="sort-select">Ordenar por:</label>
+                        <select id="sort-select" class="select-clean">
+                            <option value="preco_asc">Menor Preço ↑</option>
+                            <option value="preco_desc">Maior Preço ↓</option>
+                            <option value="nome_asc">Nome (A-Z) 🔤</option>
+                            <option value="categoria_asc">Categoria (A-Z) 📁</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Prato</th>
+                                <th>Categoria</th>
+                                <th class="text-right">Preço</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-pratos">
+                            </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
