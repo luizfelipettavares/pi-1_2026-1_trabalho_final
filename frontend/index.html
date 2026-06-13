@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Cardápio | Bistrô</title>
+    <title>Central de Estoque | Painel de Gerenciamento</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="light-theme">
@@ -17,10 +17,10 @@
     <header class="main-header">
         <div class="header-container">
             <div class="logo-area">
-                <span class="logo-icon">🍽️</span>
+                <span class="logo-icon">📦</span>
                 <div>
-                    <h1>Bistrô Control</h1>
-                    <p>Painel de Gerenciamento de Cardápio</p>
+                    <h1>Central de Estoque</h1>
+                    <p>Painel de Gerenciamento de Produtos</p>
                 </div>
             </div>
             <button id="toggle-theme" class="btn-theme" aria-label="Alternar tema visual">
@@ -35,44 +35,61 @@
             <section class="card animate-in">
                 <div class="card-header">
                     <span class="card-icon">📁</span>
-                    <h2>Nova Categoria</h2>
+                    <h2>Gerenciar Categoria</h2>
                 </div>
                 <form id="form-categoria" class="form-group">
+                    <input type="hidden" id="categoria-id">
                     <div class="input-wrapper">
                         <input type="text" id="cat-nome" placeholder="Ex: Sobremesas, Entradas..." required>
                     </div>
-                    <button type="submit" id="btn-salvar-categoria" class="btn-primary">Salvar Categoria</button>
+                    <div class="form-actions">
+                        <button type="submit" id="btn-salvar-categoria" class="btn-primary">Salvar Categoria</button>
+                        <button type="button" id="btn-cancelar-categoria" class="btn-secondary" style="display:none;">Cancelar</button>
+                    </div>
                 </form>
+
+                <div class="table-responsive" style="margin-top: 20px; max-height: 200px; overflow-y: auto;">
+                    <table class="custom-table" style="font-size: 0.85rem;">
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-categorias-tabela">
+                            </tbody>
+                    </table>
+                </div>
             </section>
 
             <section class="card animate-in">
                 <div class="card-header">
-                    <span class="card-icon">🍲</span>
-                    <h2>Gerenciar Prato</h2>
+                    <span class="card-icon">🏷️</span>
+                    <h2>Gerenciar Produto</h2>
                 </div>
-                <form id="form-prato" class="form-group">
-                    <input type="hidden" id="prato-id">
+                <form id="form-produto" class="form-group">
+                    <input type="hidden" id="produto-id">
                     
                     <div class="input-wrapper">
-                        <label for="prato-nome">Nome do Prato</label>
-                        <input type="text" id="prato-nome" placeholder="Ex: Filé do Chefe" required>
+                        <label for="produto-nome">Nome do Produto</label>
+                        <input type="text" id="produto-nome" placeholder="Ex: Batata Frita" required>
                     </div>
 
                     <div class="input-wrapper">
-                        <label for="prato-preco">Preço de Venda (R$)</label>
-                        <input type="number" id="prato-preco" step="0.01" placeholder="0,00" required>
+                        <label for="produto-preco">Preço Unitário (R$)</label>
+                        <input type="number" id="produto-preco" step="0.01" placeholder="0,00" required>
                     </div>
 
                     <div class="input-wrapper">
-                        <label for="prato-categoria">Categoria vinculada</label>
-                        <select id="prato-categoria" required>
+                        <label for="produto-categoria">Categoria vinculada</label>
+                        <select id="produto-categoria" required>
                             <option value="">Selecione uma Categoria</option>
                         </select>
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" id="btn-salvar-prato" class="btn-primary">Salvar Prato</button>
-                        <button type="button" id="btn-cancelar" class="btn-secondary" style="display:none;">Cancelar</button>
+                        <button type="submit" id="btn-salvar-produto" class="btn-primary">Salvar Produto</button>
+                        <button type="button" id="btn-cancelar-produto" class="btn-secondary" style="display:none;">Cancelar</button>
                     </div>
                 </form>
             </section>
@@ -83,7 +100,7 @@
                 <div class="table-card-header">
                     <div class="card-header">
                         <span class="card-icon">📋</span>
-                        <h2>Itens do Cardápio</h2>
+                        <h2>Lista de Produtos Cadastrados</h2>
                     </div>
                     <div class="filter-wrapper">
                         <label for="sort-select">Ordenar por:</label>
@@ -100,13 +117,13 @@
                     <table class="custom-table">
                         <thead>
                             <tr>
-                                <th>Prato</th>
+                                <th>Produto</th>
                                 <th>Categoria</th>
                                 <th class="text-right">Preço</th>
                                 <th class="text-center">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="lista-pratos">
+                        <tbody id="lista-produtos">
                             </tbody>
                     </table>
                 </div>

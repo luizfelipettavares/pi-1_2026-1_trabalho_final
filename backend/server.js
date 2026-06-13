@@ -27,35 +27,35 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS categorias (
+    db.run(`CREATE TABLE IF NOT EXISTS categoria (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL UNIQUE
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS pratos (
+    db.run(`CREATE TABLE IF NOT EXISTS produto (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
         preco REAL NOT NULL,
         categoria_id INTEGER,
-        FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE
+        FOREIGN KEY (categoria_id) REFERENCES categoria(id) ON DELETE RESTRICT
     )`);
 });
 
-app.get('/categorias', (req, res) => {
-    db.all('SELECT * FROM categorias', [], (err, rows) => {
+app.get('/categoria', (req, res) => {
+    db.all('SELECT * FROM categoria', [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
-app.post('/categorias', (req, res) => {
+app.post('/categoria', (req, res) => {
     const { nome } = req.body;
     
     if (!nome || nome.trim() === '') {
         return res.status(400).json({ error: 'O nome da categoria é obrigatório.' });
     }
     
-    db.run('INSERT INTO categorias (nome) VALUES (?)', [nome], function(err) {
+    db.run('INSERT INTO categoria (nome) VALUES (?)', [nome], function(err) {
         if (err) {
             if (err.message.includes('UNIQUE')) {
                 return res.status(400).json({ error: 'Esta categoria já existe.' });
@@ -66,28 +66,61 @@ app.post('/categorias', (req, res) => {
     });
 });
 
-app.get('/pratos', (req, res) => {
+app.put('/categoria/:id', (req, res) => {
+    const { id } = req.params;
+    const { nome } = req.body;
+
+    if (!nome || nome.trim() === '') {
+        return res.status(400).json({ error: 'O nome da categoria é obrigatório.' });
+    }
+
+    const sql = 'UPDATE categoria SET nome = ? WHERE id = ?';
+    db.run(sql, [nome, id], function(err) {
+        if (err) {
+            if (err.message.includes('UNIQUE')) {
+                return res.status(400).json({ error: 'Já existe uma categoria com este nome.' });
+            }
+            return res.status(500).json({ error: err.message });
+        }
+        res.status(200).json({ message: 'Categoria atualizada com sucesso!', updated: this.changes });
+    });
+});
+
+app.delete('/categoria/:id', (req, res) => {
+    const { id } = req.params;
+    db.run('DELETE FROM categoria WHERE id = ?', id, function(err) {
+        if (err) {
+            if (err.message.includes('FOREIGN KEY constraint failed')) {
+                return res.status(400).json({ error: 'Não é possível excluir esta categoria pois existem produtos vinculados a ela.' });
+            }
+            return res.status(500).json({ error: err.message });
+        }
+        res.status(204).send(); 
+    });
+});
+
+app.get('/produto', (req, res) => {
     const orderParam = req.query.order;
-    let orderByClause = 'ORDER BY pratos.preco ASC'; // Padrão
+    let orderByClause = 'ORDER BY produto.preco ASC'; 
 
     switch (orderParam) {
         case 'preco_desc':
-            orderByClause = 'ORDER BY pratos.preco DESC';
+            orderByClause = 'ORDER BY produto.preco DESC';
             break;
         case 'nome_asc':
-            orderByClause = 'ORDER BY pratos.nome ASC';
+            orderByClause = 'ORDER BY produto.nome ASC';
             break;
         case 'categoria_asc':
-            orderByClause = 'ORDER BY categorias.nome ASC, pratos.nome ASC';
+            orderByClause = 'ORDER BY categoria.nome ASC, produto.nome ASC';
             break;
         default:
-            orderByClause = 'ORDER BY pratos.preco ASC';
+            orderByClause = 'ORDER BY produto.preco ASC';
     }
 
     const query = `
-        SELECT pratos.*, categorias.nome as categoria_nome 
-        FROM pratos 
-        JOIN categorias ON pratos.categoria_id = categorias.id
+        SELECT produto.*, categoria.nome as categoria_nome 
+        FROM produto 
+        JOIN categoria ON produto.categoria_id = categoria.id
         ${orderByClause}
     `;
     
@@ -97,21 +130,21 @@ app.get('/pratos', (req, res) => {
     });
 });
 
-app.post('/pratos', (req, res) => {
+app.post('/produto', (req, res) => {
     const { nome, preco, categoria_id } = req.body;
 
     if (!nome || !preco || !categoria_id) {
         return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
 
-    const checkSql = 'SELECT id FROM pratos WHERE nome = ? AND categoria_id = ?';
+    const checkSql = 'SELECT id FROM produto WHERE nome = ? AND categoria_id = ?';
     db.get(checkSql, [nome, categoria_id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (row) {
-            return res.status(400).json({ error: 'Já existe um prato com este nome nesta categoria!' });
+            return res.status(400).json({ error: 'Já existe um produto com este nome nesta categoria!' });
         }
 
-        const insertSql = 'INSERT INTO pratos (nome, preco, categoria_id) VALUES (?, ?, ?)';
+        const insertSql = 'INSERT INTO produto (nome, preco, categoria_id) VALUES (?, ?, ?)';
         db.run(insertSql, [nome, preco, categoria_id], function(err) {
             if (err) return res.status(500).json({ error: err.message });
             res.status(201).json({ id: this.lastID, nome, preco, categoria_id });
@@ -119,7 +152,7 @@ app.post('/pratos', (req, res) => {
     });
 });
 
-app.put('/pratos/:id', (req, res) => {
+app.put('/produto/:id', (req, res) => {
     const { id } = req.params;
     const { nome, preco, categoria_id } = req.body;
 
@@ -127,22 +160,22 @@ app.put('/pratos/:id', (req, res) => {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
     }
 
-    const sql = 'UPDATE pratos SET nome = ?, preco = ?, categoria_id = ? WHERE id = ?';
+    const sql = 'UPDATE produto SET nome = ?, preco = ?, categoria_id = ? WHERE id = ?';
     db.run(sql, [nome, preco, categoria_id, id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.status(200).json({ message: 'Prato atualizado com sucesso!', updated: this.changes });
+        res.status(200).json({ message: 'Produto atualizado com sucesso!', updated: this.changes });
     });
 });
 
-app.delete('/pratos/:id', (req, res) => {
+app.delete('/produto/:id', (req, res) => {
     const { id } = req.params;
-    db.run('DELETE FROM pratos WHERE id = ?', id, function(err) {
+    db.run('DELETE FROM produto WHERE id = ?', id, function(err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.status(204).send(); // Status 204 indica sucesso sem corpo de resposta
+        res.status(204).send(); 
     });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+    console.log(`Servidor da Central de Estoque rodando na porta ${PORT}`);
 });
