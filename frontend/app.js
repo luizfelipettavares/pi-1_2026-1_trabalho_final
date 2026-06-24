@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://pi-1-2026-1-trabalho-final.onrender.com';
 
 const body = document.body;
 const toggleThemeBtn = document.getElementById('toggle-theme');
@@ -34,177 +34,124 @@ toggleThemeBtn.addEventListener('click', () => {
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
 });
 
-const savedSort = localStorage.getItem('lastSort') || 'preco_asc';
+const savedSort = localStorage.getItem('sort_preference') || 'preco_asc';
 sortSelect.value = savedSort;
 
-sortSelect.addEventListener('change', () => {
-    localStorage.setItem('lastSort', sortSelect.value);
-    carregarProdutos();
-});
+// --- GERENCIAMENTO DE ESTADO E CACHE LOCAL (MODO OFFLINE) ---
+let categoriasCache = [];
+let produtosCache = [];
 
-function setSubmitting(buttonId, isSubmitting, activeText) {
-    const btn = document.getElementById(buttonId);
-    if (btn) {
-        btn.disabled = isSubmitting;
-        btn.innerText = isSubmitting ? 'Processando...' : activeText;
+function salvarNoCacheLocal(chave, dados) {
+    localStorage.setItem(chave, JSON.stringify(dados));
+}
+
+function carregarDoCacheLocal(chave) {
+    const dados = localStorage.getItem(chave);
+    return dados ? JSON.parse(dados) : [];
+}
+
+function atualizarStatusConexão(isOnline) {
+    if (isOnline) {
+        offlineBanner.style.display = 'none';
+    } else {
+        offlineBanner.style.display = 'block';
+        showToast('Modo offline ativado. Usando dados locais.', 'warning');
     }
 }
 
+// --- REQUISIÇÕES DA API ---
 async function carregarCategorias() {
     try {
-        const res = await fetch(`${API_URL}/categoria`);
-        if (!res.ok) throw new Error();
-        const categoria = await res.json();
-        
-        localStorage.setItem('cache_categoria', JSON.stringify(categoria));
-        renderizarCategorias(categoria);
-        offlineBanner.style.display = 'none';
-    } catch (err) {
-        offlineBanner.style.display = 'block';
-        const localData = JSON.parse(localStorage.getItem('cache_categoria')) || [];
-        renderizarCategorias(localData);
+        const res = await fetch(`${API_URL}/categorias`);
+        if (!res.ok) throw new Error('Erro na API');
+        categoriasCache = await res.json();
+        salvarNoCacheLocal('categorias_cache', categoriasCache);
+        atualizarStatusConexão(true);
+    } catch (error) {
+        categoriasCache = carregarDoCacheLocal('categorias_cache');
+        atualizarStatusConexão(false);
     }
+    renderizarCategorias();
 }
 
-function renderizarCategorias(categoria) {
-    selectCategoria.innerHTML = '<option value="">Selecione uma Categoria</option>';
-    listaCategoriasTabela.innerHTML = '';
+async function carregarProdutos() {
+    const ordenacao = sortSelect.value;
+    localStorage.setItem('sort_preference', ordenacao);
+    
+    try {
+        const res = await fetch(`${API_URL}/produtos?sort=${ordenacao}`);
+        if (!res.ok) throw new Error('Erro na API');
+        produtosCache = await res.json();
+        salvarNoCacheLocal('produtos_cache', produtosCache);
+        atualizarStatusConexão(true);
+    } catch (error) {
+        produtosCache = carregarDoCacheLocal('produtos_cache');
+        // Aplica ordenação local simples caso a API esteja offline
+        if (ordenacao === 'preco_asc') produtosCache.sort((a, b) => a.preco - b.preco);
+        if (ordenacao === 'preco_desc') produtosCache.sort((a, b) => b.preco - a.preco);
+        if (ordenacao === 'nome_asc') produtosCache.sort((a, b) => a.nome.localeCompare(b.nome));
+        atualizarStatusConexão(false);
+    }
+    renderizarProdutos();
+}
 
-    if (categoria.length === 0) {
-        listaCategoriasTabela.innerHTML = `<tr><td colspan="2" style="text-align:center; color:var(--text-muted);">Nenhuma categoria.</td></tr>`;
+sortSelect.addEventListener('change', carregarProdutos);
+
+// --- RENDERIZAÇÃO DA INTERFACE ---
+function renderizarCategorias() {
+    selectCategoria.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
+    listaCategoriasTabela.innerHTML = '';
+    
+    if (categoriasCache.length === 0) {
+        listaCategoriasTabela.innerHTML = '<tr><td colspan="2" class="text-center text-muted">Nenhuma categoria cadastrada.</td></tr>';
         return;
     }
 
-    categoria.forEach(cat => {
-        selectCategoria.innerHTML += `<option value="${cat.id}">${cat.nome}</option>`;
-        
+    categoriasCache.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.nome;
+        selectCategoria.appendChild(option);
+
         const tr = document.createElement('tr');
+        tr.className = 'animate-in';
         tr.innerHTML = `
             <td><strong>${cat.nome}</strong></td>
             <td class="text-center">
-                <div class="table-actions">
-                    <button type="button" class="btn-table-edit" onclick="editarCategoria(${cat.id}, '${cat.nome}')">Editar</button>
-                    <button type="button" class="btn-table-delete" onclick="deletarCategoria(${cat.id})">Excluir</button>
-                </div>
+                <button class="btn btn-danger btn-sm" onclick="deletarCategoria(${cat.id})">Remover</button>
             </td>
         `;
         listaCategoriasTabela.appendChild(tr);
     });
 }
 
-formCategoria.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('categoria-id').value;
-    const nome = document.getElementById('cat-nome').value.trim();
-
-    if (!nome) return showToast('O nome da categoria é obrigatório!', 'warning');
-
-    const payload = { nome };
-    const url = id ? `${API_URL}/categoria/${id}` : `${API_URL}/categoria`;
-    const method = id ? 'PUT' : 'POST';
-
-    setSubmitting('btn-salvar-categoria', true);
-
-    try {
-        const res = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        const data = await res.json();
-        if (res.ok) {
-            showToast(id ? 'Categoria atualizada com sucesso!' : 'Categoria cadastrada com sucesso!', 'success');
-            resetarFormCategoria();
-            await carregarCategorias();
-            await carregarProdutos(); 
-        } else { 
-            showToast(data.error || 'Erro ao processar.', 'error'); 
-        }
-    } catch (err) {
-        showToast('Ação indisponível devido ao estado offline.', 'error');
-    } finally {
-        const btnText = document.getElementById('categoria-id').value ? 'Atualizar Categoria' : 'Salvar Categoria';
-        setSubmitting('btn-salvar-categoria', false, btnText);
-    }
-});
-
-window.editarCategoria = (id, nome) => {
-    document.getElementById('categoria-id').value = id;
-    document.getElementById('cat-nome').value = nome;
+function renderizarProdutos() {
+    listaProdutos.innerHTML = '';
     
-    document.getElementById('btn-salvar-categoria').innerText = 'Atualizar Categoria';
-    document.getElementById('btn-cancelar-categoria').style.display = 'inline-block';
-    document.getElementById('cat-nome').focus();
-};
-
-document.getElementById('btn-cancelar-categoria').addEventListener('click', resetarFormCategoria);
-
-function resetarFormCategoria() {
-    formCategoria.reset();
-    document.getElementById('categoria-id').value = '';
-    document.getElementById('btn-salvar-categoria').innerText = 'Salvar Categoria';
-    document.getElementById('btn-cancelar-categoria').style.display = 'none';
-}
-
-window.deletarCategoria = async (id) => {
-    if (!confirm('Deseja realmente remover esta categoria?')) return;
-
-    try {
-        const res = await fetch(`${API_URL}/categoria/${id}`, { method: 'DELETE' });
-        
-        if (res.status === 204 || res.ok) {
-            showToast('Categoria removida com sucesso!', 'success');
-            await carregarCategorias();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Erro ao tentar deletar.', 'error');
-        }
-    } catch (err) {
-        showToast('Erro de rede. Ação bloqueada em modo offline.', 'error');
-    }
-};
-
-async function carregarProdutos() {
-    const ordenacao = sortSelect.value; 
-    try {
-        const res = await fetch(`${API_URL}/produto?order=${ordenacao}`);
-        if (!res.ok) throw new Error();
-        const produto = await res.json();
-        
-        localStorage.setItem('cache_produto', JSON.stringify(produto));
-        renderizarProdutos(produto);
-        offlineBanner.style.display = 'none';
-    } catch (err) {
-        offlineBanner.style.display = 'block';
-        const cacheLocal = JSON.parse(localStorage.getItem('cache_produto')) || [];
-        renderizarProdutos(cacheLocal);
-        showToast('Modo de visualização offline ativo.', 'warning');
-    }
-}
-
-function renderizarProdutos(produto) {
-    listaProdutos.innerHTML = ''; 
-    if (produto.length === 0) {
-        listaProdutos.innerHTML = `
-            <tr>
-                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">
-                    Nenhum produto disponível.
-                </td>
-            </tr>`;
+    if (produtosCache.length === 0) {
+        listaProdutos.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum produto em estoque.</td></tr>';
         return;
     }
 
-    produto.forEach(prod => {
+    produtosCache.forEach(prod => {
         const tr = document.createElement('tr');
+        tr.className = 'animate-in';
         tr.innerHTML = `
-            <td><strong>${prod.nome}</strong></td>
-            <td><span style="background: var(--bg-global); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color);">${prod.categoria_nome || 'Sem categoria'}</span></td>
-            <td class="text-right" style="font-weight: 600; color: var(--primary);">R$ ${prod.preco.toFixed(2)}</td>
+            <td>
+                <div class="product-name-cell">
+                    <span class="product-bullet"></span>
+                    <div>
+                        <span class="font-semibold">${prod.nome}</span>
+                        <span class="product-id-tag">ID: #00${prod.id}</span>
+                    </div>
+                </div>
+            </td>
+            <td><span class="badge-category">${prod.categoria_nome || 'Sem categoria'}</span></td>
+            <td class="text-right font-mono font-semibold text-primary">R$ ${Number(prod.preco).toFixed(2)}</td>
             <td class="text-center">
-                <div class="table-actions">
-                    <button class="btn-table-edit" onclick="editarProduto(${prod.id}, '${prod.nome}', ${prod.preco}, ${prod.categoria_id})">Editar</button>
-                    <button class="btn-table-delete" onclick="deletarProduto(${prod.id})">Excluir</button>
+                <div class="actions-wrapper">
+                    <button class="btn btn-secondary btn-sm" onclick="editarProduto(${prod.id}, '${prod.nome}', ${prod.preco}, ${prod.categoria_id})">Editar</button>
+                    <button class="btn btn-danger btn-sm" onclick="deletarProduto(${prod.id})">Excluir</button>
                 </div>
             </td>
         `;
@@ -212,43 +159,76 @@ function renderizarProdutos(produto) {
     });
 }
 
+// --- SUBMISSÃO DOS FORMULÁRIOS ---
+formCategoria.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nomeInput = document.getElementById('categoria-nome');
+    const nome = nomeInput.value.trim();
+    
+    if (!nome) return;
+
+    try {
+        const res = await fetch(`${API_URL}/categoria`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome })
+        });
+        
+        const data = await res.json();
+        
+        if (res.status === 201) {
+            showToast('Categoria criada com sucesso!', 'success');
+            nomeInput.value = '';
+            await carregarCategorias();
+        } else {
+            showToast(data.error || 'Erro ao salvar categoria.', 'error');
+        }
+    } catch (error) {
+        showToast('Não foi possível salvar. Você está desconectado.', 'error');
+    }
+});
+
 formProduto.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('produto-id').value;
     const nome = document.getElementById('produto-nome').value.trim();
-    const preco = parseFloat(document.getElementById('produto-preco').value);
+    const preco = document.getElementById('produto-preco').value;
     const categoria_id = document.getElementById('produto-categoria').value;
 
-    if (!nome || isNaN(preco) || !categoria_id) {
-        return showToast('Por favor, valide todos os campos antes de enviar.', 'warning');
+    if (!nome || !preco || !categoria_id) {
+        showToast('Por favor, preencha todos os campos.', 'warning');
+        return;
     }
 
-    const payload = { nome, preco, categoria_id };
-    const url = id ? `${API_URL}/produto/${id}` : `${API_URL}/produto`;
-    const method = id ? 'PUT' : 'POST'; 
-
-    setSubmitting('btn-salvar-produto', true);
-
+    const produtoDados = { nome, preco: parseFloat(preco), categoria_id: parseInt(categoria_id) };
+    
     try {
-        const res = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        let res;
+        if (id) {
+            res = await fetch(`${API_URL}/produto/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(produtoDados)
+            });
+        } else {
+            res = await fetch(`${API_URL}/produto`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(produtoDados)
+            });
+        }
 
-        if (res.status === 204 || res.ok) {
-            showToast(id ? 'Produto atualizado!' : 'Novo produto adicionado com sucesso!', 'success');
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(id ? 'Produto atualizado com sucesso!' : 'Produto cadastrado com sucesso!', 'success');
             resetarFormProduto();
             await carregarProdutos();
         } else {
-            const data = await res.json();
-            showToast(data.error || 'Erro interno no servidor.', 'error');
+            showToast(data.error || 'Erro ao processar requisição.', 'error');
         }
-    } catch (err) {
-        showToast('Operação bloqueada. Verifique a conexão com a API.', 'error');
-    } finally {
-        const btnText = document.getElementById('produto-id').value ? 'Atualizar Produto' : 'Salvar Produto';
-        setSubmitting('btn-salvar-produto', false, btnText);
+    } catch (error) {
+        showToast('Sem conexão com o servidor. Operação abortada.', 'error');
     }
 });
 
@@ -284,10 +264,34 @@ window.deletarProduto = async (id) => {
         } else {
             showToast('Erro interno ao tentar deletar.', 'error');
         }
-    } catch (err) {
-        showToast('Ação indisponível em modo offline.', 'error');
+    } catch (error) {
+        showToast('Erro de rede. Não foi possível remover.', 'error');
     }
 };
 
-carregarCategorias();
-carregarProdutos();
+window.deletarCategoria = async (id) => {
+    if (!confirm('Deseja remover esta categoria? Atenção: isso desvinculará os produtos associados.')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/categoria/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        
+        if (res.ok) {
+            showToast('Categoria removida com sucesso!', 'success');
+            await carregarCategorias();
+            await carregarProdutos();
+        } else {
+            showToast(data.error || 'Erro ao remover categoria.', 'error');
+        }
+    } catch (error) {
+        showToast('Erro de conexão ao tentar remover categoria.', 'error');
+    }
+};
+
+// --- INICIALIZAÇÃO DA APLICAÇÃO ---
+async function inicializar() {
+    await carregarCategorias();
+    await carregarProdutos();
+}
+
+inicializar();
