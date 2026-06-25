@@ -1,17 +1,17 @@
 {
-  "name": "backend",
+  "name": "pi-1_2026-1_trabalho_final",
   "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "author": "",
-  "type": "commonjs",
-  "main": "index.js",
+  "description": "Central de Estoque - IFPI",
+  "main": "backend/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "cd backend && npm install",
+    "start": "cd backend && node server.js"
   },
-  "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "sqlite3": "^6.0.1"
-  }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luizfelipettavares/pi-1_2026-1_trabalho_final.git"
+  },
+  "license": "ISC",
+  "type": "commonjs"
 }

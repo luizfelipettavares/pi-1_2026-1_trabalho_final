@@ -163,7 +163,7 @@ app.put('/produto/:id', (req, res) => {
     const sql = 'UPDATE produto SET nome = ?, preco = ?, categoria_id = ? WHERE id = ?';
     db.run(sql, [nome, preco, categoria_id, id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.status(200).json({ message: 'Produto updated com sucesso!', updated: this.changes });
+        res.status(200).json({ message: 'Produto atualizado com sucesso!', updated: this.changes });
     });
 });
 
