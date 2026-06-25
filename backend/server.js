@@ -41,6 +41,8 @@ db.serialize(() => {
     )`);
 });
 
+// --- ENPOINTS DE CATEGORIA (ESTRITAMENTE SINGULAR) ---
+
 app.get('/categoria', (req, res) => {
     db.all('SELECT * FROM categoria', [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -98,6 +100,8 @@ app.delete('/categoria/:id', (req, res) => {
         res.status(204).send(); 
     });
 });
+
+// --- ENDPOINTS DE PRODUTO (ESTRITAMENTE SINGULAR) ---
 
 app.get('/produto', (req, res) => {
     const orderParam = req.query.order;

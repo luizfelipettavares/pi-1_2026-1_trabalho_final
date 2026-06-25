@@ -114,7 +114,7 @@ formCategoria.addEventListener('submit', async (e) => {
         
         const data = await res.json();
         if (res.ok) {
-            showToast(id ? 'Categoria updated com sucesso!' : 'Categoria cadastrada com sucesso!', 'success');
+            showToast(id ? 'Categoria atualizada com sucesso!' : 'Categoria cadastrada com sucesso!', 'success');
             resetarFormCategoria();
             await carregarCategorias();
             await carregarProdutos(); 
@@ -237,7 +237,7 @@ formProduto.addEventListener('submit', async (e) => {
         });
 
         if (res.status === 204 || res.ok) {
-            showToast(id ? 'Produto updated!' : 'Novo produto adicionado com sucesso!', 'success');
+            showToast(id ? 'Produto atualizado com sucesso!' : 'Novo produto adicionado com sucesso!', 'success');
             resetarFormProduto();
             await carregarProdutos();
         } else {
