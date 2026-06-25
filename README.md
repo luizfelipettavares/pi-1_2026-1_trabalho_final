@@ -42,8 +42,8 @@ Os dados da aplicação são salvos de forma definitiva em um banco de dados int
 ### 7. Hospedagem
 Para hospedagem foi utilizado o Vercel (frontend) e o Render (backend).
 
-Frontend: https://pi-1-2026-1-trabalho-final.vercel.app/
-Backend: https://pi-1-2026-1-trabalho-final.onrender.com/
+- **Front-end:** https://pi-1-2026-1-trabalho-final.vercel.app/
+- **Back-end:** https://pi-1-2026-1-trabalho-final.onrender.com/
 
 ---
 
@@ -57,6 +57,6 @@ Backend: https://pi-1-2026-1-trabalho-final.onrender.com/
 
 # Desenvolvedores
 
-Alisson Gabriel
-Luiz Felipe
-Renato de Paiva
+- Alisson Gabriel
+- Luiz Felipe
+- Renato de Paiva
