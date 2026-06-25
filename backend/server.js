@@ -8,7 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const dataDir = path.resolve(__dirname, 'data');
+// Salvando o banco de dados na pasta /tmp do Linux para evitar erros de permissão de escrita na Render
+const dataDir = '/tmp/data';
 if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
 }
@@ -18,7 +19,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Erro ao conectar ao banco:', err.message);
     } else {
-        console.log('Conectado ao banco SQLite com sucesso!');
+        console.log('Conectado ao banco SQLite com sucesso em:', dbPath);
 
         db.run('PRAGMA foreign_keys = ON;', (pragmaErr) => {
             if (pragmaErr) console.error('Erro ao ativar chaves estrangeiras:', pragmaErr.message);
@@ -41,7 +42,7 @@ db.serialize(() => {
     )`);
 });
 
-// --- ENPOINTS DE CATEGORIA (ESTRITAMENTE SINGULAR) ---
+// --- ENDPOINTS DE CATEGORIA (ESTRITAMENTE SINGULAR) ---
 
 app.get('/categoria', (req, res) => {
     db.all('SELECT * FROM categoria', [], (err, rows) => {
