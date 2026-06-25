@@ -51,7 +51,7 @@ Para hospedagem foi utilizado o Vercel (frontend) e o Render (backend).
 
 - **Front-end:** HTML5, CSS3 (Flexbox, CSS Grid) e JavaScript nativo (Manipulação de D.O.M).
 - **Back-end:** Node.js com Express.js para criação da API HTTP.
-- **Banco de Dados:** .
+- **Banco de Dados:** SQLite.
 
 ---
 
