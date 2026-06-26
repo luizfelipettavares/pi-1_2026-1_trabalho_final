@@ -8,7 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const dataDir = path.resolve(__dirname, 'data');
+// Salvando o banco de dados na pasta /tmp do Linux para evitar erros de permissão de escrita na Render
+const dataDir = '/tmp/data';
 if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
 }
@@ -18,7 +19,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Erro ao conectar ao banco:', err.message);
     } else {
-        console.log('Conectado ao banco SQLite com sucesso!');
+        console.log('Conectado ao banco SQLite com sucesso em:', dbPath);
 
         db.run('PRAGMA foreign_keys = ON;', (pragmaErr) => {
             if (pragmaErr) console.error('Erro ao ativar chaves estrangeiras:', pragmaErr.message);
@@ -175,7 +176,18 @@ app.delete('/produto/:id', (req, res) => {
     });
 });
 
+app.get('/', (req, res) => {
+    res.status(200).json({
+        sistema: "Central de Estoque API",
+        status: "Online",
+        endpoints: {
+            categoria: "/categoria",
+            produto: "/produto"
+        }
+    });
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor da Central de Estoque rodando na porta ${PORT}`);
 });

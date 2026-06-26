@@ -39,18 +39,24 @@ O navegador armazena localmente as preferências para melhorar a experiência e 
 ### 6. Persistência em Banco de Dados
 Os dados da aplicação são salvos de forma definitiva em um banco de dados integrado ao servidor Express.js.
 
+### 7. Hospedagem
+Para hospedagem foi utilizado o Vercel (frontend) e o Render (backend).
+
+- **Front-end:** https://pi-1-2026-1-trabalho-final.vercel.app/
+- **Back-end:** https://pi-1-2026-1-trabalho-final.onrender.com/
+
 ---
 
 ## Tecnologias Utilizadas
 
 - **Front-end:** HTML5, CSS3 (Flexbox, CSS Grid) e JavaScript nativo (Manipulação de D.O.M).
 - **Back-end:** Node.js com Express.js para criação da API HTTP.
-- **Banco de Dados:** .
+- **Banco de Dados:** SQLite.
 
 ---
 
 # Desenvolvedores
 
-Alisson Gabriel | 
-Luiz Felipe | 
-Renato de Paiva
+- Alisson Gabriel
+- Luiz Felipe
+- Renato de Paiva

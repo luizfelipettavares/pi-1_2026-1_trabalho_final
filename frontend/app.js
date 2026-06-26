@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://pi-1-2026-1-trabalho-final.onrender.com';
 
 const body = document.body;
 const toggleThemeBtn = document.getElementById('toggle-theme');
@@ -237,7 +237,7 @@ formProduto.addEventListener('submit', async (e) => {
         });
 
         if (res.status === 204 || res.ok) {
-            showToast(id ? 'Produto atualizado!' : 'Novo produto adicionado com sucesso!', 'success');
+            showToast(id ? 'Produto atualizado com sucesso!' : 'Novo produto adicionado com sucesso!', 'success');
             resetarFormProduto();
             await carregarProdutos();
         } else {
