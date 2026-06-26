@@ -51,6 +51,6 @@ Os dados da aplicação são salvos de forma definitiva em um banco de dados int
 
 # Desenvolvedores
 
-Alisson Gabriel
-Luiz Felipe
+Alisson Gabriel | 
+Luiz Felipe | 
 Renato de Paiva
