@@ -46,6 +46,9 @@ Para hospedagem foi utilizado o Vercel (frontend) e o Render (backend).
 - **Back-end:** https://pi-1-2026-1-trabalho-final.onrender.com/
 
 ---
+### 8. Link do vídeo explicando o projeto
+https://youtu.be/-QSv-VCXWiU?is=g1ohIDrDNvSyYlOS
+---
 
 ## Tecnologias Utilizadas
 
