@@ -223,9 +223,17 @@ formProduto.addEventListener('submit', async (e) => {
         return showToast('Por favor, valide todos os campos antes de enviar.', 'warning');
     }
 
-    const payload = { nome, preco, categoria_id };
-    const url = id ? `${API_URL}/produto/${id}` : `${API_URL}/produto`;
-    const method = id ? 'PUT' : 'POST'; 
+    let payload = { nome, preco, categoria_id };
+    let url = `${API_URL}/produto`;
+    let method = 'POST';
+
+    // Se houver um ID, usaremos o PATCH para demonstrar a atualização parcial
+    if (id) {
+        url = `${API_URL}/produto/${id}`;
+        method = 'PATCH';
+        // Exemplo de PATCH: enviamos apenas as propriedades para atualização parcial
+        payload = { nome, preco, categoria_id };
+    }
 
     setSubmitting('btn-salvar-produto', true);
 
@@ -237,7 +245,7 @@ formProduto.addEventListener('submit', async (e) => {
         });
 
         if (res.status === 204 || res.ok) {
-            showToast(id ? 'Produto atualizado com sucesso!' : 'Novo produto adicionado com sucesso!', 'success');
+            showToast(id ? 'Produto modificado via PATCH com sucesso!' : 'Novo produto adicionado com sucesso!', 'success');
             resetarFormProduto();
             await carregarProdutos();
         } else {

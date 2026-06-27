@@ -168,6 +168,34 @@ app.put('/produto/:id', (req, res) => {
     });
 });
 
+app.patch('/produto/:id', (req, res) => {
+    const { id } = req.params;
+    const fields = req.body;
+
+    if (fields.preco !== undefined && (isNaN(fields.preco) || fields.preco < 0)) {
+        return res.status(400).json({ error: 'O preço do produto não pode ser negativo.' });
+    }
+
+    const keys = Object.keys(fields);
+    if (keys.length === 0) {
+        return res.status(400).json({ error: 'Nenhum campo enviado para atualização.' });
+    }
+
+    const setClause = keys.map(key => `${key} = ?`).join(', ');
+    const values = keys.map(key => fields[key]);
+    values.push(id); 
+
+    const sql = `UPDATE produto SET ${setClause} WHERE id = ?`;
+
+    db.run(sql, values, function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Produto não encontrado.' });
+        }
+        res.status(200).json({ message: 'Produto atualizado parcialmente via PATCH!', updated: this.changes });
+    });
+});
+
 app.delete('/produto/:id', (req, res) => {
     const { id } = req.params;
     db.run('DELETE FROM produto WHERE id = ?', id, function(err) {
